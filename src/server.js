@@ -1,7 +1,7 @@
 const net = require('net');
 const express = require('express');
 const app = express();
-const httpPort = 8080; // Port pour les requêtes HTTP
+const port = 8080; // Port pour les requêtes HTTP
 const sshPort = 2222; // Port pour les connexions SSH
 
 // Stockage des passerelles
@@ -31,7 +31,7 @@ app.get('/', (req, res) => {
 });
 
 // Démarrer le serveur HTTP
-const server = app.listen(httpPort, () => {
+const server = app.listen(port, () => {
     const addressInfo = server.address();
     const ip = addressInfo.address === '::' ? 'localhost' : addressInfo.address; // Handle IPv6
     const port = addressInfo.port;
@@ -41,7 +41,6 @@ const server = app.listen(httpPort, () => {
 
 // Serveur SSH proxy
 const sshServer = net.createServer((clientSocket) => {
-    // Vérifier que la connexion est bien une connexion SSH
     clientSocket.once('data', (data) => {
         const [name] = data.toString().split('\n');
 
