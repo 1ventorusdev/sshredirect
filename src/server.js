@@ -3,6 +3,8 @@ const express = require('express');
 const app = express();
 const port = 8080; // Port pour les requêtes HTTP
 const sshPort = 2222; // Port pour les connexions SSH
+let address = "e"
+let ip = "8.8.8.8"
 
 // Stockage des passerelles
 const gateways = {};
@@ -25,11 +27,14 @@ app.get('/', (req, res) => {
 
     // Stockage des informations de la passerelle
     gateways[name] = { target, username };
-    res.send(`Gateway created for ${name} -> ${username}@${target}`);
+    res.send(`Gateway created for ${name} -> ${username}@${target}\nssh command: ssh ${name}@${address}`);
 });
 
 app.listen(port, () => {
-    console.log(`Gateway manager running on http://localhost:${port}`);
+    let address = server.address();
+    let ip = address.address === '::' ? 'localhost' : address.address; // Handle IPv6
+    let port = address.port;
+    console.log(`Server listening at http://${ip}:${port}`);
 });
 
 // Serveur SSH proxy
