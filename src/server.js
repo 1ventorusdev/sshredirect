@@ -25,7 +25,9 @@ app.get('/', (req, res) => {
 
     // Stockage des informations de la passerelle
     gateways[name] = { target, username };
-    res.send(`Gateway created for ${name} -> ${username}@${target}\nssh command: ssh ${name}@${address}`);
+
+    // Répondre avec les informations de la passerelle
+    res.send(`Gateway created for ${name} -> ${username}@${target}\nssh command: ssh ${name}@${serverAddress}\n`);
 });
 
 // Démarrer le serveur HTTP
@@ -33,6 +35,7 @@ const server = app.listen(port, () => {
     const addressInfo = server.address();
     const ip = addressInfo.address === '::' ? 'localhost' : addressInfo.address; // Handle IPv6
     const port = addressInfo.port;
+    global.serverAddress = `${ip}:${port}`; // Stocker l'adresse pour utilisation globale
     console.log(`HTTP server listening at http://${ip}:${port}`);
 });
 
