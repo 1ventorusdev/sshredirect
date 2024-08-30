@@ -35,8 +35,8 @@ const server = app.listen(port, () => {
     const addressInfo = server.address();
     const ip = addressInfo.address === '::' ? 'localhost' : addressInfo.address; // Handle IPv6
     const port = addressInfo.port;
-    global.serverAddress = `${ip}:${port}`; // Stocker l'adresse pour utilisation globale
-    console.log(`HTTP server listening at http://${ip}:${port}`);
+    global.serverAddress = `${addressInfo.address}`; // Stocker l'adresse pour utilisation globale
+    console.log(`HTTP server listening at ${addressInfo.address}`);
 });
 
 // Serveur SSH proxy
@@ -44,13 +44,18 @@ const sshServer = net.createServer((clientSocket) => {
     clientSocket.once('data', (data) => {
         const [name] = data.toString().split('\n');
 
+        console.log(`Received SSH connection attempt for gateway: ${name}`);
+
         if (!gateways[name]) {
+            console.log(`No gateway found for ${name}`);
             clientSocket.end('No gateway found for this name.');
             return;
         }
 
         const { target, username } = gateways[name];
         const [targetHost, targetPort] = target.split(':');
+
+        console.log(`Connecting to target: ${targetHost}:${targetPort} with username: ${username}`);
 
         // Créer une connexion SSH vers la machine cible
         const serverSocket = net.connect(targetPort, targetHost, () => {
@@ -63,6 +68,10 @@ const sshServer = net.createServer((clientSocket) => {
             console.error('Error connecting to target server:', err);
             clientSocket.end('Error connecting to target server.');
         });
+    });
+
+    clientSocket.on('error', (err) => {
+        console.error('Error with client socket:', err);
     });
 });
 
