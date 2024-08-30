@@ -1,24 +1,29 @@
 const net = require('net');
 const express = require('express');
-
 const app = express();
-const port = 8080;  // Port HTTP pour la gestion des passerelles
-const sshPort = 2222;  // Port où notre serveur SSH proxy écoute
+const port = 8080; // Port pour les requêtes HTTP
+const sshPort = 2222; // Port pour les connexions SSH
 
-// Un objet pour stocker les passerelles (nom -> { target, username })
+// Stockage des passerelles
 const gateways = {};
 
-// Configuration des routes HTTP pour gérer les passerelles
-app.get('/', (req, res) => {
-    const target = req.query.target;  // IP cible et port, par exemple "192.168.1.5:22"
-    const username = req.query.username || 'default';  // Utilisateur SSH par défaut si non fourni
-    const name = req.query.name;  // Nom unique pour la passerelle
+// Middleware pour extraire l'adresse IP de l'expéditeur
+app.use((req, res, next) => {
+    req.clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    next();
+});
 
-    if (!target || !name) {
-        return res.status(400).send('Target and name are required parameters.');
+// Route pour créer une passerelle
+app.get('/', (req, res) => {
+    const target = req.query.target || req.clientIp;
+    const username = req.query.username || 'default';
+    const name = req.query.name;
+
+    if (!name) {
+        return res.status(400).send('Name is a required parameter.');
     }
 
-    // Stocker la configuration de la passerelle
+    // Stockage des informations de la passerelle
     gateways[name] = { target, username };
     res.send(`Gateway created for ${name} -> ${username}@${target}`);
 });
@@ -29,7 +34,6 @@ app.listen(port, () => {
 
 // Serveur SSH proxy
 const sshServer = net.createServer((clientSocket) => {
-    // Recevoir le premier paquet de données pour déterminer le nom (name)
     clientSocket.once('data', (data) => {
         const [name] = data.toString().split('\n');
 
